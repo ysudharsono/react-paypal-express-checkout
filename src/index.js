@@ -10,10 +10,10 @@ class PaypalButton extends React.Component {
         window.ReactDOM = ReactDOM;
         this.state = {
             showButton: false
-        }
+        };
     }
 
-    componentWillReceiveProps ({ isScriptLoaded, isScriptLoadSucceed }) {
+    componentWillReceiveProps({ isScriptLoaded, isScriptLoadSucceed }) {
         if (!this.state.show) {
             if (isScriptLoaded && !this.props.isScriptLoaded) {
                 if (isScriptLoadSucceed) {
@@ -35,21 +35,36 @@ class PaypalButton extends React.Component {
 
     render() {
         let payment = () => {
-            return paypal.rest.payment.create(this.props.env, this.props.client, Object.assign({
+            return paypal.rest.payment.create(
+        this.props.env,
+        this.props.client,
+        Object.assign(
+            {
                 transactions: [
-                    { amount: { total: this.props.total, currency: this.props.currency } }
+                    {
+                        amount: {
+                            total: this.props.total,
+                            currency: this.props.currency
+                        },
+                        description: this.props.description,
+                        item_list: this.props.itemList
+                    }
                 ]
-            }, this.props.paymentOptions), {
-                input_fields: {
-                    // any values other than null, and the address is not returned after payment execution.
-                    no_shipping: this.props.shipping
+            },
+          this.props.paymentOptions
+        ),
+                {
+                    input_fields: {
+            // any values other than null, and the address is not returned after payment execution.
+                        no_shipping: this.props.shipping
+                    }
                 }
-            });
-        }
+      );
+        };
 
         const onAuthorize = (data, actions) => {
-            return actions.payment.execute().then((payment_data) => {
-                // console.log(`payment_data: ${JSON.stringify(payment_data, null, 1)}`)
+            return actions.payment.execute().then(payment_data => {
+        // console.log(`payment_data: ${JSON.stringify(payment_data, null, 1)}`)
                 const payment = Object.assign({}, this.props.payment);
                 payment.paid = true;
                 payment.cancelled = false;
@@ -57,27 +72,29 @@ class PaypalButton extends React.Component {
                 payment.paymentID = data.paymentID;
                 payment.paymentToken = data.paymentToken;
                 payment.returnUrl = data.returnUrl;
-                // getting buyer's shipping address and email
+        // getting buyer's shipping address and email
                 payment.address = payment_data.payer.payer_info.shipping_address;
                 payment.email = payment_data.payer.payer_info.email;
                 this.props.onSuccess(payment);
-            })
-        }
+            });
+        };
 
         let ppbtn = '';
         if (this.state.showButton) {
-            ppbtn = <paypal.Button.react
-                env={this.props.env}
-                client={this.props.client}
-                style={this.props.style}
-                payment={payment}
-                commit={true}
-                onAuthorize={onAuthorize}
-                onCancel={this.props.onCancel}
+            ppbtn = (
+        <paypal.Button.react
+          env={this.props.env}
+          client={this.props.client}
+          style={this.props.style}
+          payment={payment}
+          commit={true}
+          onAuthorize={onAuthorize}
+          onCancel={this.props.onCancel}
 
-                // "Error: Unrecognized prop: shipping" was caused by the next line
-                // shipping={this.props.shipping}
-            />
+          // "Error: Unrecognized prop: shipping" was caused by the next line
+          // shipping={this.props.shipping}
+        />
+      );
         }
         return <div>{ppbtn}</div>;
     }
@@ -88,22 +105,24 @@ PaypalButton.propTypes = {
     total: PropTypes.number.isRequired,
     client: PropTypes.object.isRequired,
     style: PropTypes.object
-}
+};
 
 PaypalButton.defaultProps = {
     paymentOptions: {},
     env: 'sandbox',
-    // null means buyer address is returned in the payment execution response
+  // null means buyer address is returned in the payment execution response
     shipping: null,
-    onSuccess: (payment) => {
+    onSuccess: payment => {
         console.log('The payment was succeeded!', payment);
     },
-    onCancel: (data) => {
-        console.log('The payment was cancelled!', data)
+    onCancel: data => {
+        console.log('The payment was cancelled!', data);
     },
-    onError: (err) => {
-        console.log('Error loading Paypal script!', err)
+    onError: err => {
+        console.log('Error loading Paypal script!', err);
     }
 };
 
-export default scriptLoader('https://www.paypalobjects.com/api/checkout.js')(PaypalButton);
+export default scriptLoader('https://www.paypalobjects.com/api/checkout.js')(
+  PaypalButton
+);
